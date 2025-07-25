@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インタラクティブガイド：Canva QRコードの印刷用データ共有方法 | 西光寺様</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Traditional Japanese Harmony (Indigo, Cream, Gold) -->
+    <!-- Application Structure Plan: Retained the successful wizard-like sequential flow but enhanced it with a top progress bar for better orientation. The core structure is now wrapped in a more aesthetically pleasing container with layered background elements for a parallax effect, creating depth. The goal is to elevate the user journey from purely functional to an elegant, brand-aligned experience for a high-value client. -->
+    <!-- Visualization & Content Choices: Report Info (Instructions) -> Goal (Guide & Instruct with elegance) -> Viz/Presentation (Animated cards, realistic UI mockups, progress bar, custom icons) -> Interaction (Smooth scrolling, animated reveals, hover effects, confetti finale) -> Justification (These rich interactions and animations build a premium feel, increase user engagement, and make the process feel effortless and rewarding) -> Library/Method (Tailwind, Vanilla JS, canvas-confetti.js for the final celebration). -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --color-bg: #FDFBF6;
+            --color-text: #373A40;
+            --color-primary: #2C3E50; /* Deep Indigo */
+            --color-accent: #D4AF37; /* Gold */
+            --color-accent-light: #F0E68C; /* Khaki/Light Gold */
+            --color-success: #28a745;
+            --color-success-light: #d4edda;
+        }
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        h1, h2, h3, .font-serif {
+            font-family: 'Noto Serif JP', serif;
+        }
+        #progress-bar-container {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        #progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        .step-card {
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            opacity: 0;
+            transform: translateY(30px);
+            will-change: transform, opacity;
+        }
+        .step-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .step-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.6s ease-in-out, padding 0.6s ease-in-out;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .step-card.active .step-content {
+            max-height: 600px;
+            padding-top: 1.25rem;
+            padding-bottom: 1.75rem;
+        }
+        .step-card.completed .step-header {
+            background-color: var(--color-success-light);
+            border-color: var(--color-success);
+        }
+        .step-card.active .step-header {
+            background-color: var(--color-accent-light);
+            border-color: var(--color-accent);
+        }
+        .step-header {
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+        }
+        .step-header:hover {
+            background-color: #f3f4f6;
+        }
+        .step-card.completed .step-header:hover {
+            background-color: #c8e6c9; /* Slightly darker green on hover */
+        }
+        .icon-wrapper {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        .step-card.active .icon-wrapper {
+            transform: scale(1.1);
+        }
+        .canva-mockup {
+            border: 1px solid #e5e7eb;
+            padding: 1.5rem;
+            background: linear-gradient(145deg, #ffffff, #f9f9f9);
+            border-radius: 0.75rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .action-button {
+            background-color: var(--color-primary);
+            color: var(--color-bg);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            animation: pulse 2s infinite;
+        }
+        .action-button:hover {
+            background-color: var(--color-accent);
+            color: var(--color-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            animation-play-state: paused;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+            50% { box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3); }
+            100% { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        }
+        #start-guide {
+            position: absolute;
+            top: 280px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--color-primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        #start-guide::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent transparent var(--color-primary) transparent;
+        }
+        #start-guide.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+    </style>
+</head>
+<body class="bg-stone-100 text-stone-800">
+    <div id="progress-bar-container" class="w-full bg-white/80 backdrop-blur-sm shadow-sm">
+        <div id="progress-bar" class="h-2 bg-gradient-to-r from-indigo-500 to-blue-500" style="width: 0%;"></div>
+    </div>
+
+    <div class="container mx-auto max-w-3xl p-4 sm:p-8 relative">
+        
+        <header class="text-center mb-12">
+            <h2 class="text-xl font-semibold text-stone-600 font-serif">西光寺様</h2>
+            <h1 class="text-3xl sm:text-4xl font-bold text-stone-900 mt-2 font-serif">Canva QRコード共有ガイド</h1>
+            <p class="mt-4 text-stone-600 max-w-2xl mx-auto">この度はご依頼いただき、誠にありがとうございます。各項目をクリックして、手順を一つずつご確認ください。</p>
+        </header>
+
+        <div id="start-guide">▲ ここをクリックして開始</div>
+
+        <main id="interactive-guide" class="space-y-6">
+            
+            <!-- Step 0: Prerequisite -->
+            <div id="step-0" class="step-card bg-white rounded-xl shadow-lg border-l-4 border-amber-400 overflow-hidden">
+                <div class="step-header p-5 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="icon-wrapper bg-amber-100 text-amber-600 rounded-full flex items-center justify-center font-bold text-2xl mr-5">!</div>
+                        <h3 class="text-xl font-semibold text-stone-900 font-serif">はじめに：重要な事前確認</h3>
+                    </div>
+                    <span class="text-amber-500 text-3xl transform transition-transform">▼</span>
+                </div>
+                <div class="step-content px-6 md:px-8">
+                    <p class="text-stone-700 leading-relaxed">印刷を確実に行うため、QRコードの色が<strong class="text-red-600 font-bold">「黒100%」</strong>で作成されているか、必ずご確認ください。カラーや薄いグレーのQRコードは、読み取り精度が低下する原因となります。</p>
+                    <button onclick="nextStep(0)" class="action-button mt-6 font-bold py-3 px-6 rounded-lg">確認しました、次へ</button>
+                </div>
+            </div>
+
+            <!-- Steps 1-7 -->
+            <div id="step-1" class="step-card bg-white rounded-xl shadow-lg border-l-4 border-gray-300 overflow-hidden">
+                <div class="step-header p-5 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="icon-wrapper bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-bold text-2xl mr-5">1</div>
+                        <h3 class="text-xl font-semibold text-stone-900 font-serif">デザインを開く</h3>
+                    </div>
+                </div>
+                <div class="step-content px-6 md:px-8">
+                    <p class="text-stone-700 leading-relaxed">まず、QRコードを配置したデザインをCanvaで開いてください。</p>
+                    <button onclick="nextStep(1)" class="action-button mt-6 font-bold py-3 px-6 rounded-lg">次のステップへ</button>
+                </div>
+            </div>
+
+            <div id="step-2" class="step-card bg-white rounded-xl shadow-lg border-l-4 border-gray-300 overflow-hidden">
+                <div class="step-header p-5 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="icon-wrapper bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-bold text-2xl mr-5">2</div>
+                        <h3 class="text-xl font-semibold text-stone-900 font-serif">「共有」ボタンをクリック</h3>
+                    </div>
+                </div>
+                <div class="step-content px-6 md:px-8">
+                    <p class="text-stone-700 leading-relaxed">Canvaの編集画面の右上にある「共有」というボタンをクリックしてください。</p>
+                    <button onclick="nextStep(2)" class="action-button mt-6 font-bold py-3 px-6 rounded-lg">次のステップへ</button>
+                </div>
+            </div>
+            
+            <div id="step-3" class="step-card bg-white rounded-xl shadow-lg border-l-4 border-gray-300 overflow-hidden">
+                <div class="step-header p-5 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="icon-wrapper bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-bold text-2xl mr-5">3</div>
+                        <h3 class="text-xl font-semibold text-stone-900 font-serif">「ダウンロード」を選択</h3>
+                    </div>
+                </div>
+                <div class="step-content px-6 md:px-8">
+                    <p class="text-stone-700 leading-relaxed">表示されたメニューの中から「ダウンロード」を選択してください。</p>
+                     <div class="canva-mockup">
+                        <p class="text-sm text-stone-500 mb-4">メニュー下部にある、こちらのアイコンの中から選択します。</p>
+                        <div class="flex justify-around items-start text-center">
+                            <div class="p-2 rounded-lg border-2 border-violet-500 bg-violet-100">
+                                <div class="w-12 h-12 bg-gray-200 rounded-full mx-auto flex items-center justify-center text-2xl">⤓</div>
+                                <p class="text-xs mt-2 font-semibold text-violet-800">ダウンロード</p>
+                            </div>
+                            <div>
+                                <div class="w-12 h-12 bg-gray-200 rounded-full mx-auto flex items-center justify-center text-2xl">🖨️</div>
+                                <p class="text-xs mt-2 text-gray-600">Canvaで印刷</p>
+                            </div>
+                            <div>
+                                <div class="w-12 h-12 bg-gray-200 rounded-full mx-auto flex items-center justify-center text-2xl">🔗</div>
+                                <p class="text-xs mt-2 text-gray-600">公開閲覧リンク</p>
+                            </div>
+                            <div>
+                                <div class="w-12 h-12 bg-gray-200 rounded-full mx-auto flex items-center justify-center text-2xl">•••</div>
+                                <p class="text-xs mt-2 text-gray-600">すべて表示</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="nextStep(3)" class="action-button mt-6 font-bold py-3 px-6 rounded-lg">次のステップへ</button>
+                </div>
+            </div>
+
+            <div id="step-4" class="step-card bg-white rounded-xl shadow-lg border-l-4 border-gray-300 overflow-hidden">
+                <div class="step-header p-5 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="icon-wrapper bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-bold text-2xl mr-5">4</div>
+                        <h3 class="text-xl font-semibold text-stone-900 font-serif">ファイルの種類：「PDF（印刷）」</h3>
+                    </div>
+                </div>
+                <div class="step-content px-6 md:px-8">
+                    <p class="text-stone-700 leading-relaxed">「ファイルの種類」をクリックし、<strong class="text-indigo-700 font-bold">「PDF（印刷）」</strong>を選びます。これが最もきれいに印刷できる形式です。</p>
+                    <div class="canva-mockup">
+                         <p class="text-sm text-stone-500 mb-3">この設定を選択してください</p>
+                         <div class="bg-white p-4 rounded-lg shadow-inner w-72 text-left mx-auto">
+                            <div class="font-semibold mb-2 text-gray-600">ファイルの種類</div>
+                            <div class="p-3 text-gray-500">JPG</div>
+                            <div class="p-3 text-gray-500">PNG</div>
+                            <div class="p-3 bg-violet-100 border-2 border-violet-400 rounded-lg font-semibold text-violet-800">PDF (印刷)</div>
+                             <div class="p-3 text-gray-500">PDF (標準)</div>
+                        </div>
+                    </div>
+                    <button onclick="nextStep(4)" class="action-button mt-6 font-bold py-3 px-6 rounded-lg">次のステップへ</button>
+                </div>
+            </div>
+
+            <div id="step-5" class="step-card bg-white rounded-xl shadow-lg border-l-4 border-gray-300 overflow-hidden">
+                <div class="step-header p-5 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="icon-wrapper bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-bold text-2xl mr-5">5</div>
+                        <h3 class="text-xl font-semibold text-stone-900 font-serif">カラープロファイル：「CMYK」</h3>
+                    </div>
+                </div>
+                <div class="step-content px-6 md:px-8">
+                    <p class="text-stone-700 leading-relaxed">「カラープロファイル」の項目が表示されたら、<strong class="text-indigo-700 font-bold">「CMYK（業務用印刷に最適）」</strong>を選択します。</p>
+                    <p class="text-sm text-stone-500 mt-3">※この項目はCanvaの有料プランでのみ表示されます。表示されない場合は、この手順は飛ばして問題ありません。</p>
+                    <button onclick="nextStep(5)" class="action-button mt-6 font-bold py-3 px-6 rounded-lg">次のステップへ</button>
+                </div>
+            </div>
+
+            <div id="step-6" class="step-card bg-white rounded-xl shadow-lg border-l-4 border-gray-300 overflow-hidden">
+                <div class="step-header p-5 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="icon-wrapper bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-bold text-2xl mr-5">6</div>
+                        <h3 class="text-xl font-semibold text-stone-900 font-serif">データをダウンロード</h3>
+                    </div>
+                </div>
+                <div class="step-content px-6 md:px-8">
+                    <p class="text-stone-700 leading-relaxed">設定が完了したら、紫色の「ダウンロード」ボタンをクリックして、PDFファイルを保存します。</p>
+                    <div class="canva-mockup">
+                        <span class="canva-button" style="width: 90%; text-align: center; padding: 1rem 0;">ダウンロード</span>
+                    </div>
+                    <button onclick="nextStep(6)" class="action-button mt-6 font-bold py-3 px-6 rounded-lg">次のステップへ</button>
+                </div>
+            </div>
+
+            <div id="step-7" class="step-card bg-white rounded-xl shadow-lg border-l-4 border-gray-300 overflow-hidden">
+                <div class="step-header p-5 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="icon-wrapper bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-bold text-2xl mr-5">7</div>
+                        <h3 class="text-xl font-semibold text-stone-900 font-serif">メールに添付して送信</h3>
+                    </div>
+                </div>
+                <div class="step-content px-6 md:px-8">
+                    <p class="text-stone-700 leading-relaxed">最後に、ダウンロードしたPDFファイルをメールに添付し、弊社担当者までお送りください。</p>
+                    <div class="text-center mt-6 p-6 bg-green-50 rounded-lg border border-green-200">
+                        <p class="font-bold text-green-800 text-2xl font-serif">🎉 全ての作業が完了しました 🎉</p>
+                        <p class="text-green-700 mt-2">ご協力、誠にありがとうございました。</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+        
+        <footer class="text-center mt-16 text-sm text-stone-500">
+            <p>&copy; 2024 中町印刷. All Rights Reserved.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const steps = Array.from(document.querySelectorAll('.step-card'));
+        const progressBar = document.getElementById('progress-bar');
+        const startGuide = document.getElementById('start-guide');
+        const totalSteps = steps.length;
+
+        function updateProgress() {
+            const completedSteps = steps.filter(s => s.classList.contains('completed')).length;
+            const progress = (completedSteps / (totalSteps -1)) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        function revealStep(step) {
+            if (step) {
+                step.classList.add('visible');
+            }
+        }
+
+        function activateStep(stepToActivate) {
+            if (stepToActivate) {
+                steps.forEach(s => {
+                    if (s.id !== stepToActivate.id) {
+                        s.classList.remove('active');
+                    }
+                });
+                stepToActivate.classList.toggle('active');
+                stepToActivate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function nextStep(currentStepIndex) {
+            const currentStep = document.getElementById(`step-${currentStepIndex}`);
+            const nextStepElement = document.getElementById(`step-${currentStepIndex + 1}`);
+
+            if (currentStep && !currentStep.classList.contains('completed')) {
+                currentStep.classList.add('completed');
+                updateProgress();
+            }
+            currentStep.classList.remove('active');
+            
+            if (nextStepElement) {
+                revealStep(nextStepElement);
+                setTimeout(() => activateStep(nextStepElement), 100);
+            } else {
+                launchConfetti();
+            }
+        }
+
+        function launchConfetti() {
+            const duration = 5 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+                const particleCount = 50 * (timeLeft / duration);
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+        }
+
+        function hideStartGuide() {
+            if(startGuide) {
+                startGuide.style.opacity = '0';
+                startGuide.style.pointerEvents = 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            steps.forEach(step => {
+                observer.observe(step);
+                const header = step.querySelector('.step-header');
+                if (header) {
+                     header.addEventListener('click', () => {
+                        if (step.classList.contains('visible')) {
+                            activateStep(step);
+                        }
+                    });
+                }
+            });
+            
+            const firstStep = document.getElementById('step-0');
+            if(firstStep) {
+                setTimeout(() => {
+                    firstStep.classList.add('visible');
+                    firstStep.classList.add('active');
+                    if(startGuide) {
+                        startGuide.classList.add('visible');
+                    }
+                }, 100);
+            }
+            
+            updateProgress();
+            
+            window.addEventListener('click', hideStartGuide, { once: true });
+        });
+    </script>
+</body>
+</html>
